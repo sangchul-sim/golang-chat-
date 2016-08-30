@@ -14,25 +14,25 @@ var (
 
 // message sent to us by the javascript client
 type message struct {
-	Handle string `json:"handle"`
-	User   string `json:"user"`
-	Room   string `json:"room"`
-	Text   string `json:"text"`
+	Handle  string `json:"handle"`
+	UserID  int    `json:"user_id"`
+	RoomID  int    `json:"room_id"`
+	Message string `json:"message"`
 }
 
 func init() {
 	var err error
 	WaitingMessage, err = json.Marshal(message{
-		Handle: "system.Message",
-		Text:   "Waiting for redis to be available. Messaging won't work until redis is available",
+		Handle:  "system.Message",
+		Message: "Waiting for redis to be available. Messaging won't work until redis is available",
 	})
 	if err != nil {
 		panic(err)
 	}
 
 	AvailableMessage, err = json.Marshal(message{
-		Handle: "system.Message",
-		Text:   "Redis is now available & messaging is now possible",
+		Handle:  "system.Message",
+		Message: "Redis is now available & messaging is now possible",
 	})
 	if err != nil {
 		panic(err)
@@ -46,8 +46,8 @@ func ValidateMessage(data []byte) (message, error) {
 		return msg, errors.Wrap(err, "Unmarshaling message")
 	}
 
-	if msg.Handle == "" && msg.Text == "" {
-		return msg, errors.New("Message has no Handle or Text")
+	if msg.Handle == "" && msg.Message == "" {
+		return msg, errors.New("Message has no Handle or Message")
 	}
 
 	return msg, nil

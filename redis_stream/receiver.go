@@ -1,6 +1,7 @@
 package redis_stream
 
 import (
+	"strconv"
 	"sync"
 	"time"
 
@@ -13,12 +14,28 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+const (
+	SystemMessage = "system.message"
+	RoomMessage   = "room.message"
+	RoomIn        = "room.in"
+)
+
+var (
+	redisSender *RedisSender
+)
+
 // RedisReceiver receives messages from Redis and broadcasts them to all
 // registered websocket connections that are Registered.
 type RedisReceiver struct {
 	pool  *redis.Pool
 	mu    sync.Mutex
 	conns map[string]*websocket.Conn
+}
+
+func RedisKey(key string) string {
+	AppName := beego.AppConfig.String("appname")
+
+	return AppName + ":" + key
 }
 
 // NewRedisReceiver creates a RedisReceiver that will use the provided
@@ -31,11 +48,29 @@ func NewRedisReceiver(pool *redis.Pool) *RedisReceiver {
 	}
 }
 
-// TODO
-// 언제 사용되는지 확인할 것
 func (rr *RedisReceiver) Wait(_ time.Time) error {
 	rr.Broadcast(chat.WaitingMessage)
 	time.Sleep(chat.WaitSleep)
+	return nil
+}
+
+func (rr *RedisReceiver) HSet(Key string, HashKey interface{}, Val *[]byte) error {
+	conn := rr.pool.Get()
+	_, err := conn.Do("HSET", Key, HashKey, *Val)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (rr *RedisReceiver) SAdd(Key string, Val interface{}) error {
+	conn := rr.pool.Get()
+	_, err := conn.Do("SADD", Key, Val)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -54,6 +89,7 @@ func (rr *RedisReceiver) Run(redisChannelName string) error {
 			beego.Info("Redis Message Received", string(v.Data))
 			// msg : chat.message
 			msg, err := chat.ValidateMessage(v.Data)
+			beego.Info("msg", msg)
 			if err != nil {
 				beego.Error("Error unmarshalling message from Redis", err)
 				continue
@@ -63,12 +99,43 @@ func (rr *RedisReceiver) Run(redisChannelName string) error {
 			// socket.broadcast.to(socket.user.room_id).emit() 은 어떻게 구현할 것인가?
 			// room 에게만 broadcast message 보내기
 			// user 에게만 direct message 보내기 (해당 room 에서만)
-			if msg.Handle == "system.message" || msg.Handle == "room.message" {
+			//
+			// room.in 구현완료
+			switch msg.Handle {
+			case SystemMessage, RoomMessage:
 				rr.Broadcast(v.Data)
-			} else {
-				// rr.Broadcast(v.Data)
-				// 어떻게 처리할 것인가?
-				continue
+			case RoomIn:
+				RoomRedisKey := RedisKey("room")
+				UserRedisKey := RedisKey("user")
+				RoomRedisKey += ":" + strconv.Itoa(msg.RoomID)
+
+				// 유저 정보를 넣을것
+				// JsonMessage, err := json.Marshal(msg)
+				// if err == nil {
+				// 	err = rr.HSet(RoomRedisKey, msg.UserID, &JsonMessage)
+				// 	if err != nil {
+				// 		beego.Debug("err", err)
+				// 	}
+				//
+				// 	err = rr.HSet(UserRedisKey, msg.UserID, &JsonMessage)
+				// 	if err != nil {
+				// 		beego.Debug("err", err)
+				// 	}
+				// }
+
+				err = rr.SAdd(RoomRedisKey, msg.UserID)
+				if err != nil {
+					beego.Debug("err", err)
+				}
+
+				err = rr.SAdd(UserRedisKey, msg.UserID)
+				if err != nil {
+					beego.Debug("err", err)
+				}
+
+				// hSet(RoomRedisKey, msg.user_id, JSON.stringfy(user_data))
+				// zincrby(redis_key, 1, msg.room_id)
+				// hSet(UserRedisKey, msg.user_id, JSON.stringfy(user_data))
 			}
 
 		// redis.Subscription{Kind string, Channel string, Count int}
