@@ -56,21 +56,17 @@ func (rr *RedisReceiver) Wait(_ time.Time) error {
 
 func (rr *RedisReceiver) HSet(Key string, HashKey interface{}, Val *[]byte) error {
 	conn := rr.pool.Get()
-	_, err := conn.Do("HSET", Key, HashKey, *Val)
-	if err != nil {
+	if _, err := conn.Do("HSET", Key, HashKey, *Val); err != nil {
 		return err
 	}
-
 	return nil
 }
 
 func (rr *RedisReceiver) SAdd(Key string, Val interface{}) error {
 	conn := rr.pool.Get()
-	_, err := conn.Do("SADD", Key, Val)
-	if err != nil {
+	if _, err := conn.Do("SADD", Key, Val); err != nil {
 		return err
 	}
-
 	return nil
 }
 
