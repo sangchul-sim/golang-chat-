@@ -13,7 +13,7 @@ var (
 )
 
 // message sent to us by the javascript client
-type message struct {
+type Message struct {
 	Handle  string `json:"handle"`
 	UserID  int    `json:"user_id"`
 	RoomID  int    `json:"room_id"`
@@ -22,16 +22,16 @@ type message struct {
 
 func init() {
 	var err error
-	WaitingMessage, err = json.Marshal(message{
-		Handle:  "system.Message",
+	WaitingMessage, err = json.Marshal(Message{
+		Handle:  "system.message",
 		Message: "Waiting for redis to be available. Messaging won't work until redis is available",
 	})
 	if err != nil {
 		panic(err)
 	}
 
-	AvailableMessage, err = json.Marshal(message{
-		Handle:  "system.Message",
+	AvailableMessage, err = json.Marshal(Message{
+		Handle:  "system.message",
 		Message: "Redis is now available & messaging is now possible",
 	})
 	if err != nil {
@@ -39,8 +39,8 @@ func init() {
 	}
 }
 
-func ValidateMessage(data []byte) (message, error) {
-	var msg message
+func ValidateMessage(data []byte) (Message, error) {
+	var msg Message
 
 	if err := json.Unmarshal(data, &msg); err != nil {
 		return msg, errors.Wrap(err, "Unmarshaling message")

@@ -1,6 +1,7 @@
 package redis_stream
 
 import (
+	"encoding/json"
 	"strconv"
 	"sync"
 	"time"
@@ -138,7 +139,19 @@ func (rr *RedisReceiver) Run(redisChannelName string) error {
 		case redis.Subscription:
 			beego.Info("Redis Subscription Received kind:", v.Kind, " count:", v.Count)
 		case error:
-			return errors.Wrap(v, "Error while subscribed to Redis channel")
+			text := "Error while subscribed to Redis channel"
+			msg := chat.Message{
+				Handle:  "system.message",
+				UserID:  0,
+				Message: text,
+			}
+
+			JsonMessage, err := json.Marshal(msg)
+			if err == nil {
+				rr.Broadcast(JsonMessage)
+			}
+
+			return errors.Wrap(v, text)
 		default:
 			beego.Info("Unknown Redis receive during subscription", v)
 		}
