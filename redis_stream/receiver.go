@@ -109,15 +109,15 @@ func (rr *RedisReceiver) Run(redisChannelName string) error {
 				// 유저 정보를 넣을것
 				// JsonMessage, err := json.Marshal(msg)
 				// if err == nil {
-				// 	err = rr.HSet(RoomRedisKey, msg.UserID, &JsonMessage)
-				// 	if err != nil {
-				// 		beego.Debug("err", err)
-				// 	}
+				//     err = rr.HSet(RoomRedisKey, msg.UserID, &JsonMessage)
+				//     if err != nil {
+				//         beego.Debug("err", err)
+				//     }
 				//
-				// 	err = rr.HSet(UserRedisKey, msg.UserID, &JsonMessage)
-				// 	if err != nil {
-				// 		beego.Debug("err", err)
-				// 	}
+				//     err = rr.HSet(UserRedisKey, msg.UserID, &JsonMessage)
+				//     if err != nil {
+				//         beego.Debug("err", err)
+				//     }
 				// }
 
 				err = rr.SAdd(RoomRedisKey, msg.UserID)

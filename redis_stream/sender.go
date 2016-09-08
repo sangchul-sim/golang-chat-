@@ -41,16 +41,16 @@ func (rs *RedisSender) Run(redisChannelName string) error {
 
 	// 위 소스는 다음과 같다.
 	// for {
-	// 	data, isChannelOpened := <-rs.messages
-	// 	if isChannelOpened == true {
-	// 		if err := publishToRedis(conn, data, redisChannelName); err != nil {
-	// 			rs.Publish(data) // attempt to redeliver later
-	// 			return err
-	// 		}
-	// 	} else {
-	// 		beego.Warn(redisChannelName + " is closed")
-	// 		break
-	// 	}
+	//     data, isChannelOpened := <-rs.messages
+	//     if isChannelOpened == true {
+	//         if err := publishToRedis(conn, data, redisChannelName); err != nil {
+	//             rs.Publish(data) // attempt to redeliver later
+	//             return err
+	//         }
+	//     } else {
+	//         beego.Warn(redisChannelName + " is closed")
+	//         break
+	//     }
 	// }
 
 	return nil
